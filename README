@@ -1,0 +1,12 @@
+Non-Determinism Monad for Tree Search
+=====================================
+
+This Haskell library provides an implementation of the MonadPlus type
+class that represents the search space as a tree whose constructors
+represent mzero, return, and mplus.
+
+Such a tree can be used to implement different search strategies,
+e.g., by using a queue. It can also be used as a basis for parallel
+search strategies that evaluate different parts of the search space
+concurrently.
+
