@@ -1,0 +1,232 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+><head
+  ><title
+    >Non-Determinism Monad for Tree Search</title
+    ><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"
+     /><meta name="generator" content="pandoc"
+     /><meta name="author" content="Sebastian Fischer &lt;sebf@informatik.uni-kiel.de&gt;"
+     /><style type="text/css"
+    >
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode, table.sourceCode pre 
+   { margin: 0; padding: 0; border: 0; vertical-align: baseline; border: none; }
+td.lineNumbers { border-right: 1px solid #AAAAAA; text-align: right; color: #AAAAAA; padding-right: 5px; padding-left: 5px; }
+td.sourceCode { padding-left: 5px; }
+pre.sourceCode { }
+pre.sourceCode span.Normal { }
+pre.sourceCode span.Keyword { color: #007020; font-weight: bold; } 
+pre.sourceCode span.DataType { color: #902000; }
+pre.sourceCode span.DecVal { color: #40a070; }
+pre.sourceCode span.BaseN { color: #40a070; }
+pre.sourceCode span.Float { color: #40a070; }
+pre.sourceCode span.Char { color: #4070a0; }
+pre.sourceCode span.String { color: #4070a0; }
+pre.sourceCode span.Comment { color: #60a0b0; font-style: italic; }
+pre.sourceCode span.Others { color: #007020; }
+pre.sourceCode span.Alert { color: red; font-weight: bold; }
+pre.sourceCode span.Function { color: #06287e; }
+pre.sourceCode span.RegionMarker { }
+pre.sourceCode span.Error { color: red; font-weight: bold; }
+</style
+    ><style type="text/css">
+  body { font-family: Optima, sans-serif; width: 40em; }
+
+  h1, h2 { color: midnightblue; }
+  h2 { margin-top: 1em; }
+
+  p { line-height: 1.5em; }
+  p code { color: dimgrey; font-weight: bold; font-size: 1.2em; }
+
+  pre.sourceCode {
+    border: thin solid lightsteelblue;
+    background-color: ghostwhite;
+    padding: 1em;
+  }
+
+  a { color: midnightblue; }
+
+  blockquote { font-size: 90%; font-style: italic; }
+
+  .nodisplay { display: none; }
+</style>
+</head
+  ><body
+  ><h1 class="title"
+    >Non-Determinism Monad for Tree Search</h1
+    ><p
+    >This Haskell library provides an implementation of the <code
+      >MonadPlus</code
+      > type class that represents the search space as a tree whose constructors represent <code
+      >mzero</code
+      >, <code
+      >return</code
+      >, and <code
+      >mplus</code
+      >.</p
+    ><h2 id="installation"
+    >Installation</h2
+    ><p
+    >This library is on <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/tree-monad"
+      >Hackage</a
+      >. The easiest way to install it is to use <a href="http://hackage.haskell.org/trac/hackage/wiki/CabalInstall"
+      >cabal-install</a
+      > and simply type</p
+    ><pre
+    ><code
+      >$ cabal install tree-monad
+</code
+      ></pre
+    ><p
+    >in a shell.</p
+    ><h2 id="usage"
+    >Usage</h2
+    ><p
+    >To use this library import it as follows.</p
+    ><div class="nodisplay">
+<pre class="sourceCode haskell"
+    ><code
+      ><span class="Keyword"
+	>import</span
+	><span class="Normal NormalText"
+	> </span
+	><span class="Normal ModuleName"
+	>Control.Monad</span
+	><br
+	 /></code
+      ></pre
+    ></div>
+<pre class="sourceCode haskell"
+    ><code
+      ><span class="Keyword"
+	>import</span
+	><span class="Normal NormalText"
+	> </span
+	><span class="Normal ModuleName"
+	>Control.Monad.SearchTree</span
+	><br
+	 /></code
+      ></pre
+    ><p
+    >Now monadic actions can be represented as trees. For example, the monadic action</p
+    ><pre class="sourceCode Haskell"
+    ><code
+      ><span class="Normal NormalText"
+	>mzero </span
+	><span class="Others InfixOperator"
+	>`mplus`</span
+	><span class="Normal NormalText"
+	> </span
+	><span class="Function"
+	>return</span
+	><span class="Normal NormalText"
+	> </span
+	><span class="DecVal Decimal"
+	>42</span
+	><br
+	 /></code
+      ></pre
+    ><p
+    >describes the following search tree.</p
+    ><pre class="sourceCode Haskell"
+    ><code
+      ><span class="Normal NormalText"
+	>Choice None (One </span
+	><span class="DecVal Decimal"
+	>42</span
+	><span class="Normal NormalText"
+	>)</span
+	><br
+	 /></code
+      ></pre
+    ><p
+    >Different search strategies can be implemented as traversals of this tree structure. For example, depth-first search looks as follows:</p
+    ><pre class="sourceCode haskell"
+    ><code
+      ><span class="Function FunctionDefinition"
+	>dfs ::</span
+	><span class="Normal NormalText"
+	> SearchTree a -&gt; [a]</span
+	><br
+	 /><span class="Normal NormalText"
+	>dfs None         = []</span
+	><br
+	 /><span class="Normal NormalText"
+	>dfs (One x)      = [x]</span
+	><br
+	 /><span class="Normal NormalText"
+	>dfs (Choice l r) = dfs l ++ dfs r</span
+	><br
+	 /></code
+      ></pre
+    ><p
+    >Because <code
+      >SearchTree</code
+      > is a monad, we can use <code
+      >do</code
+      >-notation to build trees. For example, consider the following function that creates a full binary tree of given height.</p
+    ><pre class="sourceCode haskell"
+    ><code
+      ><span class="Function FunctionDefinition"
+	>full ::</span
+	><span class="Normal NormalText"
+	> </span
+	><span class="DataType TypeConstructor"
+	>Int</span
+	><span class="Normal NormalText"
+	> -&gt; SearchTree </span
+	><span class="DataType TypeConstructor"
+	>Int</span
+	><br
+	 /><span class="Normal NormalText"
+	>full </span
+	><span class="DecVal Decimal"
+	>1</span
+	><span class="Normal NormalText"
+	> = One </span
+	><span class="DecVal Decimal"
+	>1</span
+	><br
+	 /><span class="Normal NormalText"
+	>full n = </span
+	><span class="Keyword"
+	>do</span
+	><span class="Normal NormalText"
+	> m &lt;- full (n</span
+	><span class="DecVal Decimal"
+	>-1</span
+	><span class="Normal NormalText"
+	>)</span
+	><br
+	 /><span class="Normal NormalText"
+	>            </span
+	><span class="Function"
+	>return</span
+	><span class="Normal NormalText"
+	> (</span
+	><span class="DecVal Decimal"
+	>2</span
+	><span class="Normal NormalText"
+	>*m) </span
+	><span class="Others InfixOperator"
+	>`mplus`</span
+	><span class="Normal NormalText"
+	> </span
+	><span class="Function"
+	>return</span
+	><span class="Normal NormalText"
+	> (</span
+	><span class="DecVal Decimal"
+	>2</span
+	><span class="Normal NormalText"
+	>*m</span
+	><span class="DecVal Decimal"
+	>+1</span
+	><span class="Normal NormalText"
+	>)</span
+	><br
+	 /></code
+      ></pre
+    ></body
+  ></html
+>
+
