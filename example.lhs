@@ -56,8 +56,7 @@ tree structure. For example, depth-first search looks as follows:
 
 Because `SearchTree` is a monad, we can use `do`-notation to build
 trees. For example, consider the following function that creates a
-full binary tree of given height whose leafs are labeled in increasing
-order from left to right starting with 2<sup>n-1</sup>.
+full binary tree of given height.
 
 > full 1     = return 1
 > full (n+1) = do i <- full n
