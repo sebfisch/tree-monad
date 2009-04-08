@@ -56,13 +56,7 @@ pre.sourceCode span.Error { color: red; font-weight: bold; }
     ><p
     >This Haskell library provides an implementation of the <code
       >MonadPlus</code
-      > type class that represents the search space as a tree whose constructors represent <code
-      >mzero</code
-      >, <code
-      >return</code
-      >, and <code
-      >mplus</code
-      >.</p
+      > type class that represents the search space as a tree that can be used to define different search strategies.</p
     ><h2 id="installation"
     >Installation</h2
     ><p
@@ -163,50 +157,39 @@ pre.sourceCode span.Error { color: red; font-weight: bold; }
       >SearchTree</code
       > is a monad, we can use <code
       >do</code
-      >-notation to build trees. For example, consider the following function that creates a full binary tree of given height.</p
+      >-notation to build trees. For example, consider the following function that creates a full binary tree of given height whose leafs are labeled in increasing order from left to right starting with 2<sup>n-1</sup>.</p
     ><pre class="sourceCode haskell"
     ><code
-      ><span class="Function FunctionDefinition"
-	>full ::</span
-	><span class="Normal NormalText"
-	> </span
-	><span class="DataType TypeConstructor"
-	>Int</span
-	><span class="Normal NormalText"
-	> -&gt; SearchTree </span
-	><span class="DataType TypeConstructor"
-	>Int</span
-	><br
-	 /><span class="Normal NormalText"
+      ><span class="Normal NormalText"
 	>full </span
 	><span class="DecVal Decimal"
 	>1</span
 	><span class="Normal NormalText"
-	> = One </span
+	>     = </span
+	><span class="Function"
+	>return</span
+	><span class="Normal NormalText"
+	> </span
 	><span class="DecVal Decimal"
 	>1</span
 	><br
 	 /><span class="Normal NormalText"
-	>full n = </span
+	>full (n</span
+	><span class="DecVal Decimal"
+	>+1</span
+	><span class="Normal NormalText"
+	>) = </span
 	><span class="Keyword"
 	>do</span
 	><span class="Normal NormalText"
-	> m &lt;- full (n</span
-	><span class="DecVal Decimal"
-	>-1</span
-	><span class="Normal NormalText"
-	>)</span
+	> i &lt;- full n</span
 	><br
 	 /><span class="Normal NormalText"
-	>            </span
+	>                </span
 	><span class="Function"
 	>return</span
 	><span class="Normal NormalText"
-	> (</span
-	><span class="DecVal Decimal"
-	>2</span
-	><span class="Normal NormalText"
-	>*m) </span
+	> (n-i) </span
 	><span class="Others InfixOperator"
 	>`mplus`</span
 	><span class="Normal NormalText"
@@ -214,11 +197,7 @@ pre.sourceCode span.Error { color: red; font-weight: bold; }
 	><span class="Function"
 	>return</span
 	><span class="Normal NormalText"
-	> (</span
-	><span class="DecVal Decimal"
-	>2</span
-	><span class="Normal NormalText"
-	>*m</span
+	> (i</span
 	><span class="DecVal Decimal"
 	>+1</span
 	><span class="Normal NormalText"
@@ -226,6 +205,128 @@ pre.sourceCode span.Error { color: red; font-weight: bold; }
 	><br
 	 /></code
       ></pre
+    ><p
+    >Here are some example calls of <code
+      >full</code
+      > with corresponding results:</p
+    ><pre
+    ><code
+      >*Main&gt; full 1 :: SearchTree Int
+One 1
+*Main&gt; full 2 :: SearchTree Int
+Choice (One 0) (One 2)
+*Main&gt; full 3 :: SearchTree Int
+Choice (Choice (One 2) (One 1)) (Choice (One 0) (One 3))
+</code
+      ></pre
+    ><h2 id="performance"
+    >Performance</h2
+    ><p
+    >Although <code
+      >SearchTree</code
+      > is a full-fledged instance of <code
+      >MonadPlus</code
+      >, the implementation of the bind operation is not optimal. If you are interested in the details, then read Janis Voigtlaenders paper on <a href="http://wwwtcs.inf.tu-dresden.de/~voigt/mpc08.pdf"
+      >Asymptotic Improvement of Computations over Free Monads</a
+      >. If not, simply note that nesting calls of <code
+      >&gt;&gt;=</code
+      > to the left is bad for performance.</p
+    ><p
+    >There is a different type <code
+      >Search</code
+      > that is also an instance of <code
+      >Monad</code
+      > and <code
+      >MonadPlus</code
+      > and does not suffer from this performance penalty. The function</p
+    ><pre class="sourceCode Haskell"
+    ><code
+      ><span class="Function FunctionDefinition"
+	>searchTree ::</span
+	><span class="Normal NormalText"
+	> Search a -&gt; SearchTree a</span
+	><br
+	 /></code
+      ></pre
+    ><p
+    >converts a value of type <code
+      >Search a</code
+      > into one of type <code
+      >SearchTree a</code
+      >. As an aside, the implementation of <code
+      >&gt;&gt;=</code
+      > for <code
+      >Search</code
+      > is also more efficient if it is not nested to the left because it does not involve pattern matching on tree constructors.</p
+    ><p
+    >Incidentally, the function <code
+      >full</code
+      > nests <code
+      >&gt;&gt;=</code
+      > to the left, so we can use it to compare the performance of both monads. The following example is borrowed from Janis's paper:</p
+    ><pre class="sourceCode haskell"
+    ><code
+      ><span class="Function FunctionDefinition"
+	>zigzag ::</span
+	><span class="Normal NormalText"
+	> SearchTree a -&gt; a</span
+	><br
+	 /><span class="Normal NormalText"
+	>zigzag = zig</span
+	><br
+	 /><span class="Normal NormalText"
+	> </span
+	><span class="Keyword"
+	>where</span
+	><br
+	 /><span class="Normal NormalText"
+	>  zig (One x)      = x</span
+	><br
+	 /><span class="Normal NormalText"
+	>  zig (Choice l _) = zag l</span
+	><br
+	 /><br
+	 /><span class="Normal NormalText"
+	>  zag (One x)      = x</span
+	><br
+	 /><span class="Normal NormalText"
+	>  zag (Choice _ r) = zig r</span
+	><br
+	 /></code
+      ></pre
+    ><p
+    >This function descends a single path of a search tree and yields the leaf at its end. Because of behaviour similar to the naive reverse function in terms of <code
+      >++</code
+      >, the function <code
+      >zigzag . full</code
+      > has quadratic run time. Similar to the solution in case of reverse where functional lists can be used to achieve linear run time, the implementation of <code
+      >Search</code
+      > uses continuations and the function <code
+      >zigzag . searchTree . full</code
+      > has linear run time.</p
+    ><h2 id="applications"
+    >Applications</h2
+    ><p
+    >There is a blog post on <a href="http://www-ps.informatik.uni-kiel.de/~sebf/haskell/speedup-search-with-parallelism.lhs.html"
+      >parallel tree search</a
+      > that implements a parallel version of depth-first search based on search trees using explicit parallelism. The package <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/parallel-tree-search"
+      >parallel-tree-search</a
+      > on Hackage uses the library described here to implement the function <code
+      >parSearch</code
+      > shown there.</p
+    ><h2 id="feedback"
+    >Feedback</h2
+    ><p
+    >For bug reports or feedback contact <script type="text/javascript"
+      >
+<!--
+h='&#x69;&#110;&#102;&#x6f;&#114;&#x6d;&#x61;&#116;&#x69;&#x6b;&#46;&#x75;&#110;&#x69;&#x2d;&#x6b;&#x69;&#x65;&#108;&#46;&#100;&#x65;';a='&#64;';n='&#x73;&#x65;&#98;&#102;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+'Sebastian Fischer'+'<\/'+'a'+'>');
+// -->
+</script
+      ><noscript
+      >&#x53;&#x65;&#98;&#x61;&#x73;&#116;&#x69;&#x61;&#110;&#32;&#70;&#x69;&#x73;&#x63;&#104;&#x65;&#114;&#32;&#40;&#x73;&#x65;&#98;&#102;&#32;&#x61;&#116;&#32;&#x69;&#110;&#102;&#x6f;&#114;&#x6d;&#x61;&#116;&#x69;&#x6b;&#32;&#100;&#x6f;&#116;&#32;&#x75;&#110;&#x69;&#x2d;&#x6b;&#x69;&#x65;&#108;&#32;&#100;&#x6f;&#116;&#32;&#100;&#x65;&#x29;</noscript
+      >.</p
     ></body
   ></html
 >
