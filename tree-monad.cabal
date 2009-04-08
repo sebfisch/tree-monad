@@ -1,5 +1,5 @@
 Name:          tree-monad
-Version:       0.1
+Version:       0.2
 Cabal-Version: >= 1.6
 Synopsis:      Non-Determinism Monad for Tree Search
 Description:   
@@ -24,6 +24,7 @@ Library
   Build-Depends:    base
   Exposed-Modules:  Control.Monad.SearchTree
   Ghc-Options:      -Wall
+  Extensions:       Rank2Types
 
 Source-Repository head
   type:     git
