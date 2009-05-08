@@ -61,6 +61,7 @@ instance Monad Search
  where
   return x = Search ($x)
   a >>= f  = Search (\k -> search a (\x -> search (f x) k))
+  fail _   = mzero
 
 instance MonadPlus Search
  where
